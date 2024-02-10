@@ -48,7 +48,7 @@ std::string LLVMErrorToString(llvm::Error error) {
     return out;
 }
 
-std::string LLVMFormValueToString(const Optional<DWARFFormValue> &value, const char *defaultValue) {
+std::string LLVMFormValueToString(const std::optional<DWARFFormValue> &value, const char *defaultValue) {
     if (value) {
         Expected<const char *> cstr = value->getAsCString();
         if (cstr) {
@@ -83,11 +83,11 @@ const dwarf::FormParams DwarfUnitWrapper::GetFormParams() {
 
 /// Dwarf die wrapper
 
-Optional<DwarfDieWrapper> DwarfDieWrapper::GetAttributeValueAsReferencedDie(const llvm::DWARFFormValue &value) const {
+std::optional<DwarfDieWrapper> DwarfDieWrapper::GetAttributeValueAsReferencedDie(const llvm::DWARFFormValue &value) const {
     if (auto ref = die_.getAttributeValueAsReferencedDie(value)) {
         return DwarfDieWrapper{ref, (BinaryId) offset_.binaryId};
     }
-    return llvm::None;
+    return std::nullopt;
 }
 
 DwarfUnitWrapper DwarfDieWrapper::GetDwarfUnit() const {
@@ -192,7 +192,7 @@ std::string AttributeReader::ReadString(Attribute attribute, const char *default
 
 std::optional<DwarfDieWrapper> AttributeReader::ReadReference(Attribute attribute, bool recursive) const {
     if (auto attr = FindAttribute(attribute, recursive)) {
-        return die_.GetAttributeValueAsReferencedDie(*attr).getValue();
+        return *die_.GetAttributeValueAsReferencedDie(*attr);
     }
     return std::nullopt;
 }
@@ -396,7 +396,7 @@ private:
             }
             default: {
                 throw DwarfError{"unexpected container type {}, DIE: {}",
-                                 TagString(tag), DieReader{die}.Dump()};
+                                 TagString(tag).str(), DieReader{die}.Dump()};
             }
         }
 
@@ -424,7 +424,7 @@ private:
             case dwarf::DW_TAG_lexical_block:
                 return "block";
             default:
-                throw FatalError{"unexpected dwarf tag {}", dwarf::TagString(tag)};
+                throw FatalError{"unexpected dwarf tag {}", dwarf::TagString(tag).str()};
         }
     }
 

@@ -136,7 +136,6 @@ bool IsValidForBinaryView(void *context, BNBinaryView *handle) {
 
 std::string NodeToString(const LD::Node* node) {
     LD::OutputBuffer buffer;
-    LD::initializeOutputBuffer(nullptr, nullptr, buffer, 512);
     node->print(buffer);
     std::string result {buffer.getBuffer(), buffer.getCurrentPosition()};
     free(buffer.getBuffer());
@@ -174,6 +173,7 @@ std::optional<BN::DebugFunctionInfo> ParseMangledFunctionInfo(const MachO::Symbo
         symbol.addr,
         nullptr,
         nullptr,
+        {},
     };
 }
 
@@ -191,6 +191,7 @@ BN::DebugFunctionInfo ParseFunctionInfo(const MachO::Symbol& symbol) {
         symbol.addr,
         nullptr,
         nullptr,
+        {},
     };
 }
 

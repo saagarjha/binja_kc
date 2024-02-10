@@ -23,6 +23,7 @@
 
 #include <binaryninjaapi.h>
 #include <fmt/format.h>
+#include <fmt/std.h>
 
 #define BDLogDebug(...)                                                                  \
     do {                                                                                 \

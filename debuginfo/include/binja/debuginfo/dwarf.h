@@ -107,7 +107,7 @@ private:
     using DWARFFormValue = llvm::DWARFFormValue;
     using IteratorTransform = std::function<DwarfDieWrapper(const llvm::DWARFDie &)>;
     using Iterator = llvm::iterator_range<Detail::DwarfDieWrapperIterator>;
-    template<class T> using Optional = llvm::Optional<T>;
+    template<class T> using Optional = std::optional<T>;
 
 public:
     DwarfDieWrapper(llvm::DWARFDie die, BinaryId binaryId)

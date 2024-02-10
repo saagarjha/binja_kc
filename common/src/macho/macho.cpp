@@ -50,21 +50,6 @@ union lc_str {
 #endif
 };
 
-/*
- * LC_FILESET_ENTRY commands describe constituent Mach-O files that are part
- * of a fileset. In one implementation, entries are dylibs with individual
- * mach headers and repositionable text and data segments. Each entry is
- * further described by its own mach header.
- */
-struct fileset_entry_command {
-    uint32_t cmd;          /* LC_FILESET_ENTRY */
-    uint32_t cmdsize;      /* includes entry_id string */
-    uint64_t vmaddr;       /* memory address of the entry */
-    uint64_t fileoff;      /* file offset of the entry */
-    union lc_str entry_id; /* contained entry id */
-    uint32_t reserved;     /* reserved */
-};
-
 struct arm_unified_thread_state {
     arm_state_hdr_t ash;
     union {
@@ -73,24 +58,7 @@ struct arm_unified_thread_state {
     } uts;
 };
 
-struct dyld_chained_starts_in_segment {
-    uint32_t size;             // size of this (amount kernel needs to copy)
-    uint16_t page_size;        // 0x1000 or 0x4000
-    uint16_t pointer_format;   // DYLD_CHAINED_PTR_*
-    uint64_t segment_offset;   // offset in memory to start of segment
-    uint32_t max_valid_pointer;// for 32-bit OS, any value beyond this is not a pointer
-    uint16_t page_count;       // how many pages are in array
-    uint16_t page_start[1];    // each entry is offset in each page of first element in chain
-                               // or DYLD_CHAINED_PTR_START_NONE if no fixups on page
-                               // uint16_t    chain_starts[1];    // some 32-bit formats may require multiple starts per page.
-                               // for those, if high bit is set in page_starts[], then it
-                               // is index into chain_starts[] which is a list of starts
-                               // the last of which has the high bit set
-};
-
 enum {
-    DYLD_CHAINED_PTR_START_NONE = 0xFFFF, // used in page_start[] to denote a page with no fixups
-    DYLD_CHAINED_PTR_START_MULTI = 0x8000,// used in page_start[] to denote a page which has multiple starts
     DYLD_CHAINED_PTR_START_LAST = 0x8000, // used in chain_starts[] to denote last start in list for page
 };
 
@@ -104,7 +72,6 @@ enum {
     DYLD_CHAINED_PTR_64_OFFSET = 6,    // target is vm offset
     DYLD_CHAINED_PTR_ARM64E_OFFSET = 7,// old name
     DYLD_CHAINED_PTR_ARM64E_KERNEL = 7,// stride 4, unauth target is vm offset
-    DYLD_CHAINED_PTR_64_KERNEL_CACHE = 8,
     DYLD_CHAINED_PTR_ARM64E_USERLAND = 9,     // stride 8, unauth target is vm offset
     DYLD_CHAINED_PTR_ARM64E_FIRMWARE = 10,    // stride 4, unauth target is vmaddr
     DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE = 11,// stride 1, x86_64 kernel caches
@@ -203,7 +170,7 @@ void MachO::MachHeaderParser::VerifyHeader() {
 
 Fileset MachHeaderParser::DecodeFileset(Detail::DataReader &reader) {
     auto cmd = reader.Peek<fileset_entry_command>();
-    reader.Seek(cmd.entry_id.offset);
+    reader.Seek(cmd.entry_id);
     std::string name = reader.ReadString();
     return Fileset{
         .name = name,
